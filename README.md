@@ -11,3 +11,8 @@ Below
 
 * Project01 -> [LED_Blink]
 * Project02 -> [LED_Circle] 
+
+
+#### Acknowledgements
+[Mitch Davis YouTube Channel](https://www.youtube.com/@MitchDavis2)
+
