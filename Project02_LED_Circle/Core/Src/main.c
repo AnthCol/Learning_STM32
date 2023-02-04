@@ -1,22 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_host.h"
 
@@ -34,11 +15,19 @@ static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 void MX_USB_HOST_Process(void);
 
+//----------------------------------------------------------------------------- ABOVE IS AUTO-GENERATED ----------------------------------------------------------------------
+
+void run_LED_circle();
+void turn_off_LEDs(uint16_t pin_nums[4]);
+
+
+
 int main(void){
 
     HAL_Init();
 
     SystemClock_Config();
+
 
     MX_GPIO_Init();
     MX_I2C1_Init();
@@ -47,31 +36,101 @@ int main(void){
     MX_USB_HOST_Init();
 
 
-    // need to make them run in a circle 
 
-    short current_index = 3, prev_index = 0; 
-    uint16_t gpio_pin_numbers[4] = {(uint16_t) 0x1000, 
-                                    (uint16_t) 0x2000, 
-                                    (uint16_t) 0x4000, 
+    GPIO_PinState state;
+
+    uint16_t gpio_pin_numbers[4] = {(uint16_t) 0x1000,
+                                    (uint16_t) 0x2000,
+                                    (uint16_t) 0x4000,
                                     (uint16_t) 0x8000};
-    
+
+    /*
+     *			DESCRIPTION OF PROJECT
+     *
+     *
+     * Check how many times the user button is pressed within a 3 second period
+     *
+     * 0 presses = no lights
+     * 1 press = blue
+     * 2 press = orange
+     * 3 press = green
+     * 4 press = red
+     *
+     *
+     * more than 4 = all colours light up
+     *
+     *
+     */
 
 
-    HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[prev_index]);
+    // ideally without polling this time
 
     while (1){
-        HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[prev_index]); 
-        HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[current_index]); 
-        HAL_Delay(100); 
 
-        prev_index = current_index; 
-        current_index++; 
-        current_index %= 4; 
+    	state = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+
+    	if (state) run_LED_circle(gpio_pin_numbers);
+
+    	HAL_Delay(100);
+
         MX_USB_HOST_Process();
 
     }
 
 }
+
+void turn_off_LEDs(uint16_t gpio_pin_numbers[4]){
+	for (short i = 0; i < 4; i++){
+		HAL_GPIO_WritePin(GPIOD, gpio_pin_numbers[i], GPIO_PIN_RESET);
+	}
+	return;
+}
+
+void run_LED_circle(uint16_t gpio_pin_numbers[4]){
+
+	short current_index = 3, prev_index = 0;
+	GPIO_PinState state;
+
+	HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[prev_index]);
+
+	while (1){
+
+		HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[prev_index]);
+		HAL_GPIO_TogglePin(GPIOD, gpio_pin_numbers[current_index]);
+		HAL_Delay(100);
+
+
+		prev_index = current_index;
+		current_index++;
+		current_index %= 4;
+
+		HAL_Delay(25);
+		state = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+
+		if (state) break;
+	}
+
+	turn_off_LEDs(gpio_pin_numbers);
+
+	return;
+}
+
+
+
+
+
+
+
+
+//-------------------------------------------------------------------------- AUTO GENERATED STUFF BELOW [MY WORK ABOVE] ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 
 /**
   * @brief System Clock Configuration
@@ -313,6 +372,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MEMS_INT2_GPIO_Port, &GPIO_InitStruct);
+
+
+  // ADDED FOR THIS PROJECT
+  //  SOURCE: //deepbluembedded.com/stm32-external-interrupt-example-lab/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 
 }
 
